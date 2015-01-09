@@ -25,8 +25,14 @@ class FscBuilder
     @source_files ||= []
   end
 
+  def packages
+    @packages ||= []
+  end
+
   def create_task
     dest = File.join output_folder, output_file
+    assembly_refs = packages.flat_map { |m| Dir["#{m}/lib/net40/*.dll"] }
+    puts "Pack: " + assembly_refs.join(" ")
     if (output_file != @task_name)
       # Define this task before the file task, so any
       # task description will be associated with this task
@@ -34,10 +40,11 @@ class FscBuilder
     end
     Rake::FileTask::define_task dest => source_files do |t|
       FileUtils.mkdir_p output_folder
+      refs = assembly_refs.map { |r| "-r:#{r}" }.join(" ")
       output = "--out:#{dest}"
       target = "--target:exe"
       sources = source_files.join(" ")
-      system "fsharpc #{output} #{target} #{sources}"
+      system "fsharpc #{output} #{refs} #{target} #{sources}"
     end
   end
 end
@@ -55,6 +62,8 @@ fsc :build do |t|
   t.output_folder = "output"
   t.output_file = "nde.exe"
   t.source_files << "main.fs"
+  t.packages << "packages/Nancy"
+  t.packages << "packages/Nancy.Hosting.Self"
 end
 
 #task :build => ["nde.exe"] 
