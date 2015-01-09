@@ -11,8 +11,11 @@ end
 
 # Creates the concrete task for building F# code
 class FscBuilder
-  def initialize name
-    @exe_name = name
+  attr_accessor :output_file
+
+  def initialize task_name
+    @task_name = task_name
+    @output_file = task_name
     yield self if block_given?
   end
   
@@ -21,8 +24,13 @@ class FscBuilder
   end
 
   def create_task
-    Rake::FileTask::define_task @exe_name => source_files do |t|
-      output = "--out:#{@exe_name}"
+    if (output_file != @task_name)
+      # Define this task before the file task, so any
+      # task description will be associated with this task
+      Rake::Task::define_task @task_name => @output_file
+    end
+    Rake::FileTask::define_task @output_file => source_files do |t|
+      output = "--out:#{@output_file}"
       target = "--target:exe"
       sources = source_files.join(" ")
       system "fsharpc #{output} #{target} #{sources}"
@@ -39,10 +47,11 @@ task :clean do
 end
 
 desc "Main executable"
-fsc "nde.exe" do |t|
+fsc :build do |t|
+  t.output_file = "nde.exe"
   t.source_files << "main.fs"
 end
 
-task :build => ["nde.exe"] 
+#task :build => ["nde.exe"] 
 
 task :default => [:clean, :build]
