@@ -11,7 +11,8 @@ end
 
 # Creates the concrete task for building F# code
 class FscBuilder
-  def initialize *args
+  def initialize name
+    @exe_name = name
     yield self if block_given?
   end
   
@@ -20,8 +21,8 @@ class FscBuilder
   end
 
   def create_task
-    Rake::FileTask::define_task "nde.exe" do |t|
-      system "fsharpc --out:nde.exe --target:exe #{source_files.join(" ")}"
+    Rake::FileTask::define_task @exe_name do |t|
+      system "fsharpc --out:#{@exe_name} --target:exe #{source_files.join(" ")}"
     end
   end
 end
