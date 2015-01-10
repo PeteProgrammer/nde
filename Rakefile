@@ -29,6 +29,10 @@ class FscBuilder
     @packages ||= []
   end
 
+  def get_nuget_dlls path
+    Dir[File.join path, "lib/net40/*.dll"]
+  end
+
   def create_task
     dest = File.join output_folder, output_file
     assembly_refs = packages.flat_map { |m| Dir["#{m}/lib/net40/*.dll"] }
@@ -37,6 +41,7 @@ class FscBuilder
       # task description will be associated with this task
       Rake::Task::define_task @task_name => dest
     end
+    assembly_refs = packages.flat_map { |m| get_nuget_dlls m }
     task_dependencies = source_files | assembly_refs
     Rake::FileTask::define_task dest => task_dependencies do |t|
       FileUtils.mkdir_p output_folder
