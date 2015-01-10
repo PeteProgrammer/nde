@@ -20,6 +20,12 @@ class FscBuilder
     @output_file = task_name
     yield self if block_given?
   end
+
+  def output_folder_task
+    @output_folder_task ||= Rake::FileTask::define_task output_folder do |t|
+      FileUtils.mkdir_p output_folder
+    end
+  end
   
   def source_files
     @source_files ||= []
@@ -35,8 +41,7 @@ class FscBuilder
 
   def create_copy_task source
     dest = File.join output_folder, File.basename(source)
-    Rake::FileTask::define_task dest => source do
-      FileUtils.mkdir_p output_folder
+    Rake::FileTask::define_task dest => [source, output_folder_task] do
       puts "Copying #{source} -> #{dest}"
       FileUtils.cp source, dest
     end
@@ -52,9 +57,8 @@ class FscBuilder
     end
     assembly_refs = packages.flat_map { |m| get_nuget_dlls m }
     copy_dependency_tasks = assembly_refs.map { |m| create_copy_task m }
-    task_dependencies = source_files | assembly_refs | copy_dependency_tasks
+    task_dependencies = source_files | assembly_refs | copy_dependency_tasks | [output_folder_task]
     Rake::FileTask::define_task dest => task_dependencies do |t|
-      FileUtils.mkdir_p output_folder
       refs = assembly_refs.map { |r| "-r:#{r}" }.join(" ")
       output = "--out:#{dest}"
       target = "--target:exe"
