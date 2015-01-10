@@ -22,7 +22,10 @@ class FscBuilder
 
   def create_task
     Rake::FileTask::define_task @exe_name => source_files do |t|
-      system "fsharpc --out:#{@exe_name} --target:exe #{source_files.join(" ")}"
+      output = "--out:#{@exe_name}"
+      target = "--target:exe"
+      sources = source_files.join(" ")
+      system "fsharpc #{output} #{target} #{sources}"
     end
   end
 end
