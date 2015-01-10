@@ -44,6 +44,9 @@ class FscBuilder
     assembly_refs = packages.flat_map { |m| get_nuget_dlls m }
     task_dependencies = source_files | assembly_refs
     Rake::FileTask::define_task dest => task_dependencies do |t|
+      assembly_refs.each do |r|
+        FileUtils.cp r, output_folder
+      end
       FileUtils.mkdir_p output_folder
       refs = assembly_refs.map { |r| "-r:#{r}" }.join(" ")
       output = "--out:#{dest}"
