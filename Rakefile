@@ -9,7 +9,8 @@ namespace :paket do
   task :bootstrap => paket_exe
 end
 
-class Fsc
+# Creates the concrete task for building F# code
+class FscBuilder
   def initialize *args
     yield self if block_given?
   end
@@ -26,7 +27,7 @@ class Fsc
 end
 
 def fsc *args, &block 
-  builder = Fsc.new *args, &block
+  builder = FscBuilder.new *args, &block
   builder.create_task
 end
 
