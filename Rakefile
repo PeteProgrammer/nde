@@ -33,6 +33,15 @@ class FscBuilder
     Dir[File.join path, "lib/net40/*.dll"]
   end
 
+  def create_copy_task source
+    dest = File.join output_folder, File.basename(source)
+    Rake::FileTask::define_task dest => source do
+      FileUtils.mkdir_p output_folder
+      puts "Copying #{source} -> #{dest}"
+      FileUtils.cp source, dest
+    end
+  end
+
   def create_task
     dest = File.join output_folder, output_file
     assembly_refs = packages.flat_map { |m| Dir["#{m}/lib/net40/*.dll"] }
@@ -42,11 +51,9 @@ class FscBuilder
       Rake::Task::define_task @task_name => dest
     end
     assembly_refs = packages.flat_map { |m| get_nuget_dlls m }
-    task_dependencies = source_files | assembly_refs
+    copy_dependency_tasks = assembly_refs.map { |m| create_copy_task m }
+    task_dependencies = source_files | assembly_refs | copy_dependency_tasks
     Rake::FileTask::define_task dest => task_dependencies do |t|
-      assembly_refs.each do |r|
-        FileUtils.cp r, output_folder
-      end
       FileUtils.mkdir_p output_folder
       refs = assembly_refs.map { |r| "-r:#{r}" }.join(" ")
       output = "--out:#{dest}"
